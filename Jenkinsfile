@@ -6,7 +6,7 @@ pipeline {
     // NOTE: You will need to configure Node.js tool in Jenkins Global Tool Configuration.
     tools {
         // Replace 'NodeJS_18' with the name you give your Node.js installation in Jenkins setup.
-        nodejs 'NodeJS_18' 
+        nodejs 'NodeJS_20' 
     }
 
     stages {
