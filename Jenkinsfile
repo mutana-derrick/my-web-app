@@ -71,12 +71,13 @@ pipeline {
         stage('Deploy to Local Docker Host') {
             steps {
                 echo "Deploying container to local Docker host..."
-                // CHANGED 'sh' TO 'bat' FOR WINDOWS COMPATIBILITY ***
+                // Use 'bat' for Windows shell commands
                 bat """
                     docker rm -f my-web-app || true
-                    docker run -d --name my-web-app -p 8080:${env.APP_PORT} ${env.DOCKER_IMAGE}:latest
+                    // Changing host port from 8080 (used by Jenkins) to 8081
+                    docker run -d --name my-web-app -p 8081:${env.APP_PORT} ${env.DOCKER_IMAGE}:latest
                 """
-                echo "Deployment complete! Application should be available on http://localhost:8080"
+                echo "Deployment complete! Application should be available on http://localhost:8081"
             }
         }
     }
