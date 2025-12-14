@@ -1,12 +1,17 @@
 pipeline {
-    // 1. Agent: Specifies where the pipeline runs (on the Jenkins master or an available agent)
     agent any 
 
-    // 2. Tools: Automatically install Node.js (assuming you have the Node.js plugin installed in Jenkins)
-    // NOTE: You will need to configure Node.js tool in Jenkins Global Tool Configuration.
     tools {
-        // Replace 'NodeJS_18' with the name you give your Node.js installation in Jenkins setup.
-        nodejs 'NodeJS_20' 
+        nodejs 'NodeJS_20' // MUST match the name in Jenkins Global Tool Config
+    }
+
+    environment {
+        // Docker Hub Username
+        DOCKER_IMAGE = 'mutanaderrick/my-web-app' 
+        // MUST match the ID set in Jenkins Credentials
+        DOCKER_CREDENTIALS_ID = 'docker-hub-credentials' 
+        // Define the port mapping for deployment
+        APP_PORT = 3000
     }
 
     stages {
@@ -33,29 +38,47 @@ pipeline {
         stage('Test') {
             steps {
                 echo 'Running Unit and Integration Tests...'
-                // Executes the 'test' script defined in your package.json (e.g., 'mocha', 'jest', etc.)
+                // Assumes your package.json test script is fixed to exit 0
                 bat 'npm test'
-                
-                // Correction: The original assignment had only 'echo "Running tests..."'.
-                // We are adding 'npm test' to meet the Assessment Criteria for 'Evidence of Testing'[cite: 5, 5].
             }
         }
 
-        stage('Package/Build Artifact') {
+        // NEW STAGE: Build Docker Image
+        stage('Build Docker Image') {
             steps {
-                echo 'Creating production-ready assets (if applicable)...'
-                // For many Node.js apps, this is 'npm run build' or similar.
-                // If your Node.js app is simple and doesn't need compilation (like the sample provided later), this can be an empty placeholder.
-                // For now, we'll just run a simple directory listing to prove the stage executes on Windows:
-                bat 'dir'
+                echo "Building Docker image: ${env.DOCKER_IMAGE}:latest"
+                script {
+                    // This command executes the Dockerfile in the workspace
+                    docker.build("${env.DOCKER_IMAGE}:latest")
+                }
             }
         }
-        
-        // This stage is a placeholder as the next task (Task 2) will fully implement deployment.
-        stage('Deploy') {
+
+        // NEW STAGE: Push to Docker Hub
+        stage('Push to Docker Hub') {
             steps {
-                echo "Deployment step placeholder. Real deployment will be implemented in Task 2."
-                echo "Application built and tested successfully!"
+                echo "Pushing image to Docker Hub..."
+                script {
+                    // Use the configured Jenkins credential ID to log in and push
+                    docker.withRegistry('https://index.docker.io/v1/', env.DOCKER_CREDENTIALS_ID) {
+                        docker.image("${env.DOCKER_IMAGE}:latest").push()
+                    }
+                }
+            }
+        }
+
+        // NEW STAGE: Deploy to Local Docker Host
+        stage('Deploy to Local Docker Host') {
+            steps {
+                echo "Deploying container to local Docker host..."
+                // Use a shell command (sh or bat) to run Docker commands
+                // We use 'sh' here because modern Jenkins on Windows often has 'sh' available, 
+                // but if this fails, we will revert to 'bat'.
+                sh """
+                    docker rm -f my-web-app || true
+                    docker run -d --name my-web-app -p 8080:${env.APP_PORT} ${env.DOCKER_IMAGE}:latest
+                """
+                echo "Deployment complete! Application should be available on http://localhost:8080"
             }
         }
     }
