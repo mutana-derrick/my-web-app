@@ -92,7 +92,7 @@ pipeline {
                 bat 'kubectl rollout status deployment/nodejs-app-deployment --context minikube' 
 
                 echo "Getting Minikube service URL..."
-                powershell '"C:\\Program Files\\Kubernetes\\Minikube\\minikube.exe" service nodejs-app-service --url | Out-File -FilePath minikube_url.txt'
+                powershell '& "C:\\Program Files\\Kubernetes\\Minikube\\minikube.exe" service nodejs-app-service --url | Out-File -FilePath minikube_url.txt'
                 
                 // Print the URL to the console output
                 powershell 'Get-Content minikube_url.txt'
