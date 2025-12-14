@@ -81,6 +81,7 @@ pipeline {
         }
 
         // ... (The Expose Service stage should also have the KUBECONFIG variable set)
+        // NEW STAGE: Expose Service
         stage('Expose Service') {
             environment {
                 // Set the KUBECONFIG variable
@@ -92,9 +93,12 @@ pipeline {
                 bat 'kubectl rollout status deployment/nodejs-app-deployment --context minikube' 
 
                 echo "Getting Minikube service URL..."
-                powershell '& "C:\\Program Files\\Kubernetes\\Minikube\\minikube.exe" service nodejs-app-service --url | Out-File -FilePath minikube_url.txt'
                 
-                // Print the URL to the console output
+                // Use BAT to execute the command and redirect output to a file
+                // We must still quote the path due to spaces, but the BAT shell handles it better
+                bat '"C:\\Program Files\\Kubernetes\\Minikube\\minikube.exe" service nodejs-app-service --url > minikube_url.txt'
+                
+                // Print the URL to the console output using powershell to read the file
                 powershell 'Get-Content minikube_url.txt'
             }
         }
