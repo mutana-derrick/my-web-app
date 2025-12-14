@@ -67,25 +67,31 @@ pipeline {
 
         // NEW STAGE: Kubernetes Deployment
         stage('Kubernetes Deployment') {
+            environment {
+                // Set the KUBECONFIG variable to point to the shared config file location
+                KUBECONFIG = "C:\\ProgramData\\Jenkins\\.kube_config_jenkins"
+            }
             steps {
                 echo "Deploying to Minikube using kubectl..."
                 // Apply the deployment and service manifests
-                // *** ADDING --context minikube ***
+                // --context minikube is still necessary
                 bat 'kubectl apply -f deployment.yaml --context minikube'
                 bat 'kubectl apply -f service.yaml --context minikube'
             }
         }
 
-        // NEW STAGE: Expose Service
+        // ... (The Expose Service stage should also have the KUBECONFIG variable set)
         stage('Expose Service') {
+            environment {
+                // Set the KUBECONFIG variable
+                KUBECONFIG = "C:\\ProgramData\\Jenkins\\.kube_config_jenkins"
+            }
             steps {
                 echo "Waiting for pods to be ready..."
                 // Wait for the two replicas defined in deployment.yaml to be ready
-                // *** ADDING --context minikube ***
                 bat 'kubectl rollout status deployment/nodejs-app-deployment --context minikube' 
 
                 echo "Getting Minikube service URL..."
-                // The minikube command is generally robust and shouldn't need the context flag
                 powershell 'minikube service nodejs-app-service --url | Out-File -FilePath minikube_url.txt'
                 
                 // Print the URL to the console output
