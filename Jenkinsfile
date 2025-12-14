@@ -71,10 +71,8 @@ pipeline {
         stage('Deploy to Local Docker Host') {
             steps {
                 echo "Deploying container to local Docker host..."
-                // Use a shell command (sh or bat) to run Docker commands
-                // We use 'sh' here because modern Jenkins on Windows often has 'sh' available, 
-                // but if this fails, we will revert to 'bat'.
-                sh """
+                // CHANGED 'sh' TO 'bat' FOR WINDOWS COMPATIBILITY ***
+                bat """
                     docker rm -f my-web-app || true
                     docker run -d --name my-web-app -p 8080:${env.APP_PORT} ${env.DOCKER_IMAGE}:latest
                 """
