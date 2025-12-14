@@ -1,0 +1,26 @@
+# deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nodejs-app-deployment
+  labels:
+    app: nodejs-web-app
+spec:
+  replicas: 2 # Deploy 2 copies of your application
+  selector:
+    matchLabels:
+      app: nodejs-web-app
+  template:
+    metadata:
+      labels:
+        app: nodejs-web-app
+    spec:
+      containers:
+      - name: nodejs-app
+        # REPLACE mutanaderrick/my-web-app:latest with your actual image name
+        image: mutanaderrick/my-web-app:latest 
+        # Crucial for Minikube - tells Kubernetes not to pull from the internet 
+        # because we already loaded the image in Step 3
+        imagePullPolicy: Never 
+        ports:
+        - containerPort: 3000 # Must match the port your Node.js app listens on (3000)

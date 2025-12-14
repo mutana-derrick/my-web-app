@@ -10,8 +10,6 @@ pipeline {
         DOCKER_IMAGE = 'mutanaderrick/my-web-app' 
         // MUST match the ID set in Jenkins Credentials
         DOCKER_CREDENTIALS_ID = 'docker-hub-credentials' 
-        // Define the port mapping for deployment
-        APP_PORT = 3000
     }
 
     stages {
@@ -67,17 +65,30 @@ pipeline {
             }
         }
 
-        // NEW STAGE: Deploy to Local Docker Host
-        stage('Deploy to Local Docker Host') {
+        // NEW STAGE: Kubernetes Deployment (Replaces old Docker Deploy)
+        stage('Kubernetes Deployment') {
             steps {
-                echo "Deploying container to local Docker host..."
-                // Use 'bat' for Windows shell commands
-                bat """
-                    docker rm -f my-web-app || true
-                    // Changing host port from 8080 (used by Jenkins) to 8081
-                    docker run -d --name my-web-app -p 8081:${env.APP_PORT} ${env.DOCKER_IMAGE}:latest
-                """
-                echo "Deployment complete! Application should be available on http://localhost:8081"
+                echo "Deploying to Minikube using kubectl..."
+                // Apply the deployment and service manifests committed to the repo
+                bat 'kubectl apply -f deployment.yaml'
+                bat 'kubectl apply -f service.yaml'
+            }
+        }
+
+        // NEW STAGE: Expose Service and Verify
+        stage('Expose Service') {
+            steps {
+                echo "Waiting for pods to be ready..."
+                // Wait for the two replicas defined in deployment.yaml to be ready
+                bat 'kubectl rollout status deployment/nodejs-app-deployment' 
+
+                echo "Getting Minikube service URL..."
+                // This command tells you the external URL to access the deployed application
+                // We wrap it in powershell for environment variable assignment on Windows
+                powershell 'minikube service nodejs-app-service --url | Out-File -FilePath minikube_url.txt'
+                
+                // Print the URL to the console output
+                powershell 'Get-Content minikube_url.txt'
             }
         }
     }

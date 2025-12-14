@@ -1,0 +1,16 @@
+# service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nodejs-app-service
+spec:
+  selector:
+    app: nodejs-web-app
+  # NodePort is the best type for local Minikube access.
+  # It exposes the service on a port open on the host machine.
+  type: NodePort 
+  ports:
+    - port: 80 # The port the service itself listens on
+      targetPort: 3000 # The internal container port the service forwards traffic to
+      # The nodePort is the external port you will use to access the app (e.g., 30000-32767)
+      nodePort: 30080
