@@ -65,26 +65,27 @@ pipeline {
             }
         }
 
-        // NEW STAGE: Kubernetes Deployment (Replaces old Docker Deploy)
+        // NEW STAGE: Kubernetes Deployment
         stage('Kubernetes Deployment') {
             steps {
                 echo "Deploying to Minikube using kubectl..."
-                // Apply the deployment and service manifests committed to the repo
-                bat 'kubectl apply -f deployment.yaml'
-                bat 'kubectl apply -f service.yaml'
+                // Apply the deployment and service manifests
+                // *** ADDING --context minikube ***
+                bat 'kubectl apply -f deployment.yaml --context minikube'
+                bat 'kubectl apply -f service.yaml --context minikube'
             }
         }
 
-        // NEW STAGE: Expose Service and Verify
+        // NEW STAGE: Expose Service
         stage('Expose Service') {
             steps {
                 echo "Waiting for pods to be ready..."
                 // Wait for the two replicas defined in deployment.yaml to be ready
-                bat 'kubectl rollout status deployment/nodejs-app-deployment' 
+                // *** ADDING --context minikube ***
+                bat 'kubectl rollout status deployment/nodejs-app-deployment --context minikube' 
 
                 echo "Getting Minikube service URL..."
-                // This command tells you the external URL to access the deployed application
-                // We wrap it in powershell for environment variable assignment on Windows
+                // The minikube command is generally robust and shouldn't need the context flag
                 powershell 'minikube service nodejs-app-service --url | Out-File -FilePath minikube_url.txt'
                 
                 // Print the URL to the console output
